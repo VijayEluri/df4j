@@ -1,15 +1,15 @@
 package org.df4j.core.node.ext;
 
-import org.df4j.core.connector.MulticastStreamOutput;
-import org.df4j.core.node.ext.Actor1;
-import org.reactivestreams.Publisher;
-import org.reactivestreams.Subscriber;
 
-public abstract class StreamProcessor<M, R> extends Actor1<M> implements Publisher<R> {
-	protected final MulticastStreamOutput<R> output = new MulticastStreamOutput<>(this);
+import org.df4j.core.Feeder;
+import org.df4j.core.Port;
+import org.df4j.core.connector.StreamFeeder;
+
+public abstract class StreamProcessor<M, R> extends Actor1<M> implements Feeder<R> {
+	protected final StreamFeeder<R> output = new StreamFeeder<>(this);
 
     @Override
-    public void subscribe(Subscriber<? super R> subscriber) {
+    public void subscribe(Port<? super R> subscriber) {
         output.subscribe(subscriber);
     }
 

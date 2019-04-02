@@ -14,6 +14,8 @@ import java.util.concurrent.Executor;
  *  it can be used as a channel for unexpected errors.
  */
 public class AsyncAction<R> extends AsyncProc {
+    private static final Object[] emptyArgs = new Object[0];
+
     /**
      * blocked initially, until {@link #start} called.
      * blocked when this actor goes to executor, to ensure serial execution of the act() method.
@@ -28,6 +30,8 @@ public class AsyncAction<R> extends AsyncProc {
      * if true, this action cannot be restarted
      */
     protected volatile boolean stopped = false;
+
+    private boolean argsPurged;
 
     public AsyncAction() {
     }
@@ -52,6 +56,7 @@ public class AsyncAction<R> extends AsyncProc {
         if (stopped) {
             throw new IllegalStateException();
         }
+        argsPurged = false;
         controlLock.unblock();
     }
 
@@ -75,11 +80,43 @@ public class AsyncAction<R> extends AsyncProc {
         return super.toString() + result.toString();
     }
 
+    protected synchronized Object[] extractArguments() {
+        if (asyncParams == null) {
+            return emptyArgs;
+        } else {
+            int paramCount = asyncParams.size();
+            Object[] args = new Object[paramCount];
+            for (int k = 0; k < paramCount; k++) {
+                BaseInput<?> arg = asyncParams.get(k);
+                args[k] = arg.current();
+                arg.purge();
+            }
+            argsPurged = true;
+            return args;
+        }
+    }
+
+    protected synchronized void purgeAll() {
+        if (locks != null) {
+            for (int k = 0; k < locks.size(); k++) {
+                locks.get(k).purge();
+            }
+        }
+        if (!argsPurged) {
+            if (asyncParams != null) {
+                for (int k = 0; k < asyncParams.size(); k++) {
+                    asyncParams.get(k).purge();
+                }
+            }
+            argsPurged = true;
+        }
+    }
+
     protected R callAction() throws Throwable {
         if (actionCaller == null) {
             actionCaller = ActionCaller.findAction(this, getParamCount());
         }
-        Object[] args = collectTokens();
+        Object[] args = extractArguments();
         R  res = (R) actionCaller.apply(args);
         return res;
     }

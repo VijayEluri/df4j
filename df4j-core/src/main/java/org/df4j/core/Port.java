@@ -10,9 +10,6 @@
 
 package org.df4j.core;
 
-import org.reactivestreams.Subscriber;
-import org.reactivestreams.Subscription;
-
 import java.util.concurrent.CompletableFuture;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
@@ -23,9 +20,20 @@ import java.util.function.Consumer;
  * @param <T> the type of the message
  */
 @FunctionalInterface
-public interface Port<T> extends Subscriber<T>, Consumer<T>, BiConsumer<T, Throwable> {
+public interface Port<T> extends BiConsumer<T, Throwable> {
 
-    default void onSubscribe(Subscription s) {}
+    /**
+     * Data notification sent by the {@link Feeder} in response to requests to {@link Subscription#request(long)}.
+     *
+     * @param t the element signaled
+     */
+    void onNext(T t);
+
+    /**
+     * callback for
+     */
+    default void onTimout() {}
+
 
     /**
      * If this ScalarSubscriber was not already completed, sets it completed state.
@@ -38,11 +46,6 @@ public interface Port<T> extends Subscriber<T>, Consumer<T>, BiConsumer<T, Throw
      * successful end of stream
      */
     default void onComplete() {}
-
-    @Override
-    default void accept(T token) {
-        onNext(token);
-    }
 
     /**
      * to pass data from  {@link CompletableFuture} to ScalarSubscriber using     *
@@ -59,20 +62,5 @@ public interface Port<T> extends Subscriber<T>, Consumer<T>, BiConsumer<T, Throw
         } else {
             onNext(r);
         }
-    }
-
-    static <T> Port<T> fromCompletable(CompletableFuture<T> completable) {
-        return new Port<T>() {
-
-            @Override
-            public void onNext(T message) {
-                completable.complete(message);
-            }
-
-            @Override
-            public void onError(Throwable ex) {
-                completable.completeExceptionally(ex);
-            }
-        };
     }
 }

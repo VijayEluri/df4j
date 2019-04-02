@@ -1,16 +1,16 @@
 package org.df4j.core.node.ext;
 
+import org.df4j.core.Feeder;
 import org.df4j.core.Port;
 import org.df4j.core.node.AsyncAction;
-import org.reactivestreams.Publisher;
 
 public class AllOf extends AsyncSupplier<Void> {
 
     public AllOf() {
     }
 
-    public AllOf(Publisher<?>... sources) {
-        for (Publisher source: sources) {
+    public AllOf(Feeder<?>... sources) {
+        for (Feeder source: sources) {
             registerAsyncResult(source);
         }
     }
@@ -20,7 +20,7 @@ public class AllOf extends AsyncSupplier<Void> {
      *
      * @param source source of completion. successfull or unseccessfull
      */
-    public synchronized void registerAsyncResult(Publisher source) {
+    public synchronized void registerAsyncResult(Feeder source) {
         source.subscribe(new Enter());
     }
 
@@ -36,7 +36,7 @@ public class AllOf extends AsyncSupplier<Void> {
      *
      * @param source source of errors
      */
-    public synchronized void registerAsyncDaemon(Publisher source) {
+    public synchronized void registerAsyncDaemon(Feeder source) {
         source.subscribe(new DaemonEnter());
     }
 

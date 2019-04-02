@@ -1,17 +1,16 @@
 package org.df4j.core.node.ext;
 
-import org.reactivestreams.Subscriber;
+import org.df4j.core.Port;
+import org.df4j.core.connector.ScalarInput;
 import org.df4j.core.util.invoker.ConsumerInvoker;
 import org.df4j.core.util.invoker.FunctionInvoker;
 import org.df4j.core.util.invoker.RunnableInvoker;
-import org.reactivestreams.Subscription;
 
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-public class AsyncFunction<T, R> extends AsyncSupplier<R> implements Subscriber<T> {
-    protected final ConstInput<T> argument = new ConstInput<>();
-    private Subscription s;
+public class AsyncFunction<T, R> extends AsyncSupplier<R> implements Port<T> {
+    protected final ScalarInput<T> argument = new ScalarInput<>(this);
 
     public AsyncFunction() { }
 
@@ -28,8 +27,8 @@ public class AsyncFunction<T, R> extends AsyncSupplier<R> implements Subscriber<
     }
 
     @Override
-    public void onSubscribe(Subscription s) {
-        this.s = s;
+    public void subscribe(Port<? super R> subscriber) {
+        super.asyncResult().subscribe(subscriber);
     }
 
     @Override

@@ -1,12 +1,13 @@
 package org.df4j.core.messagescalar;
 
+import org.df4j.core.Feeder;
+import org.df4j.core.connector.ScalarInput;
 import org.df4j.core.connectornode.CompletablePromise;
 import org.df4j.core.node.Action;
 import org.df4j.core.node.ext.AsyncBiFunction;
 import org.df4j.core.node.ext.AsyncSupplier;
 import org.junit.Assert;
 import org.junit.Test;
-import org.reactivestreams.Publisher;
 
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -32,7 +33,7 @@ public class AsyncProcTest {
     }
 
     public static class Blocker<T,R> extends AsyncSupplier<R> {
-        ConstInput<T> arg = new ConstInput<>();
+        ScalarInput<T> arg = new ScalarInput<>(this);
     }
 
     class Mult2 extends Mult {
@@ -64,9 +65,9 @@ public class AsyncProcTest {
 
     /* D = b^2 - 4ac */
     class Discr extends AsyncSupplier<Double> {
-        ConstInput<Double> pa = new ConstInput<>();
-        ConstInput<Double> pb = new ConstInput<>();
-        ConstInput<Double> pc = new ConstInput<>();
+        ScalarInput<Double> pa = new ScalarInput<>(this);
+        ScalarInput<Double> pb = new ScalarInput<>(this);
+        ScalarInput<Double> pc = new ScalarInput<>(this);
 
         @Action
         public double act(Double a, Double b, Double c) {
@@ -100,9 +101,9 @@ public class AsyncProcTest {
      * (-b +/- sqrt(D))/2a
      */
     class RootCalc extends AsyncSupplier<double[]> {
-        ConstInput<Double> pa = new ConstInput<>();
-        ConstInput<Double> pb = new ConstInput<>();
-        ConstInput<Double> pd = new ConstInput<>();
+        ScalarInput<Double> pa = new ScalarInput<>(this);
+        ScalarInput<Double> pb = new ScalarInput<>(this);
+        ScalarInput<Double> pd = new ScalarInput<>(this);
 
         @Action
         public double[] act(Double a, Double b, Double d) {
@@ -117,7 +118,7 @@ public class AsyncProcTest {
         }
     }
 
-    private CompletablePromise<double[]> calcRoots(double a, double b, Publisher<Double> d) {
+    private CompletablePromise<double[]> calcRoots(double a, double b, Feeder<Double> d) {
         RootCalc rc = new RootCalc();
         rc.pa.onNext(a);
         rc.pb.onNext(b);
@@ -160,7 +161,7 @@ public class AsyncProcTest {
             start();
         }
 
-        protected Plus(Publisher pa, Publisher pb) {
+        protected Plus(Feeder pa, Feeder pb) {
             this();
             pa.subscribe(param1);
             pb.subscribe(param2);
@@ -174,7 +175,7 @@ public class AsyncProcTest {
             start();
         }
 
-        protected Minus(Publisher pa, Publisher pb) {
+        protected Minus(Feeder pa, Feeder pb) {
             this();
             pa.subscribe(param1);
             pb.subscribe(param2);
@@ -188,7 +189,7 @@ public class AsyncProcTest {
             start();
         }
 
-        protected Mult(Publisher pa, Publisher pb) {
+        protected Mult(Feeder pa, Feeder pb) {
             this();
             pa.subscribe(param1);
             pb.subscribe(param2);
@@ -202,7 +203,7 @@ public class AsyncProcTest {
             start();
         }
 
-        protected Div(Publisher pa, Publisher pb) {
+        protected Div(Feeder pa, Feeder pb) {
             this();
             pa.subscribe(param1);
             pb.subscribe(param2);

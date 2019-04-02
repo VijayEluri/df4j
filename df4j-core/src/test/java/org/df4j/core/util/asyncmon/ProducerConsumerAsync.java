@@ -1,6 +1,6 @@
 package org.df4j.core.util.asyncmon;
 
-import org.reactivestreams.Subscriber;
+import org.df4j.core.Port;
 import org.df4j.core.connectornode.CompletablePromise;
 import org.df4j.core.node.AsyncAction;
 import org.df4j.core.node.AsyncProc;
@@ -42,7 +42,7 @@ public class ProducerConsumerAsync extends AllOf {
             );
         }
 
-        public CriticalSection take(Subscriber<T> connector) {
+        public CriticalSection take(Port<T> connector) {
             CriticalSection criticalSection = (AsyncMonitor monitor) -> {
                 if (count == 0) {
                     monitor.doWait();

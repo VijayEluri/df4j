@@ -1,8 +1,9 @@
 package org.df4j.core.messagestream;
 
 import org.df4j.core.Port;
-import org.df4j.core.connectornode.PickPoint;
+import org.df4j.core.connectornode.SubmissionFeeder;
 import org.df4j.core.node.AsyncAction;
+import org.df4j.core.node.AsyncProc;
 import org.df4j.core.util.TimeSignalPublisher;
 import org.junit.Test;
 
@@ -25,10 +26,11 @@ public class DiningPhilosophers {
 
     @Test
     public void test() throws InterruptedException {
+        AsyncProc.setThreadLocalExecutor(AsyncProc.currentThreadExec);
         // create places for forks with 1 fork in each
         for (int k = 0; k < num; k++) {
             ForkPlace forkPlace = new ForkPlace(k);
-            forkPlace.onNext(new Fork(k));
+            forkPlace.offer(new Fork(k));
             forkPlaces[k] = forkPlace;
         }
         // create philosophers
@@ -57,17 +59,13 @@ public class DiningPhilosophers {
         }
     }
 
-    static class ForkPlace extends PickPoint<Fork> {
+    static class ForkPlace extends SubmissionFeeder<Fork> {
         int id;
         String label;
 
         public ForkPlace(int k) {
             id = k;
             label = "Forkplace_" + id;
-        }
-
-        public void subscribe(Port<Fork> subscriber) {
-            super.subscribe(subscriber);
         }
     }
 
@@ -147,10 +145,10 @@ public class DiningPhilosophers {
                     return;
                 case Replete:
                     println("Release first (" + firstPlace.id + ")");
-                    firstPlace.onNext(first);
+                    firstPlace.offer(first);
                     first = null;
                     println("Release second (" + secondPlace.id + ")");
-                    secondPlace.onNext(second);
+                    secondPlace.offer(second);
                     second = null;
                     rounds++;
                     if (rounds < N) {

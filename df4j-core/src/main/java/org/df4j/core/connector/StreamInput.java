@@ -55,7 +55,7 @@ public class StreamInput<T> extends ScalarInput<T> implements Port<T> {
 
     /**
      * Signals the end of the stream. Turns this pin on. Removed value is
-     * null (null cannot be send with Subscriber.add(message)).
+     * null (null cannot be send with Port.add(message)).
      */
     @Override
     public synchronized void onComplete() {

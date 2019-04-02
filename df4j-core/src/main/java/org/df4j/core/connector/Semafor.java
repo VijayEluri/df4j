@@ -1,7 +1,6 @@
 package org.df4j.core.connector;
 
 import org.df4j.core.PermitSubscriber;
-import org.reactivestreams.Subscription;
 import org.df4j.core.node.AsyncProc;
 
 /**
@@ -12,7 +11,6 @@ import org.df4j.core.node.AsyncProc;
 public class Semafor extends AsyncProc.Lock implements PermitSubscriber {
     protected final AsyncProc actor;
     private long count = 0;
-    protected Subscription subscription;
 
     public Semafor(AsyncProc actor, int count) {
         actor.super(count <= 0);
@@ -41,28 +39,12 @@ public class Semafor extends AsyncProc.Lock implements PermitSubscriber {
         }
     }
 
-    /** decrements resource counter by delta
-     *
-     * @param delta number of permissions to aquire
-     */
-    protected synchronized void acquire(long delta) {
-        if (delta <= 0) {
-            throw  new IllegalArgumentException("resource counter delta must be > 0");
-        }
+    @Override
+    public synchronized void purge() {
         long prev = count;
-        count -= delta;
+        count--;
         if (prev > 0 && count <= 0 ) {
             block();
         }
-    }
-
-    public synchronized void drainPermits() {
-        count = 0;
-        block();
-    }
-
-    @Override
-    public synchronized void purge() {
-        acquire(1);
     }
 }

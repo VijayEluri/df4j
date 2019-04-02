@@ -1,7 +1,7 @@
 package org.df4j.core.node.ext;
 
-import org.reactivestreams.Publisher;
-import org.reactivestreams.Subscriber;
+import org.df4j.core.Feeder;
+import org.df4j.core.Port;
 import org.df4j.core.node.AsyncAction;
 import org.df4j.core.util.invoker.Invoker;
 import org.df4j.core.util.invoker.RunnableInvoker;
@@ -22,7 +22,7 @@ import java.util.function.Supplier;
  *
  * @param <R> type of the result
  */
-public class AsyncSupplier<R> extends AsyncAction<R> implements Publisher<R>, Future<R> {
+public class AsyncSupplier<R> extends AsyncAction<R> implements Feeder<R>, Future<R> {
 
     public AsyncSupplier() {}
 
@@ -39,7 +39,7 @@ public class AsyncSupplier<R> extends AsyncAction<R> implements Publisher<R>, Fu
     }
 
     @Override
-    public void subscribe(Subscriber<? super R> subscriber) {
+    public void subscribe(Port<? super R> subscriber) {
         asyncResult().subscribe(subscriber);
     }
 

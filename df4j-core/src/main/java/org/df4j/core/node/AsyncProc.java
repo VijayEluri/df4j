@@ -9,8 +9,7 @@
  */
 package org.df4j.core.node;
 
-import org.reactivestreams.Subscriber;
-import org.reactivestreams.Subscription;
+import org.df4j.core.Port;
 import org.df4j.core.util.executor.CurrentThreadExecutor;
 
 import java.util.ArrayList;
@@ -43,7 +42,6 @@ public abstract class AsyncProc implements Runnable {
             }
         }
     };
-    private static final Object[] emptyArgs = new Object[0];
 
     /**
      * for debug purposes, call
@@ -61,11 +59,11 @@ public abstract class AsyncProc implements Runnable {
     /**
      * the set of all b/w Pins
      */
-    private ArrayList<Lock> locks;
+    protected ArrayList<Lock> locks;
     /**
      * the set of all colored Pins, to form array of arguments
      */
-    private ArrayList<ConstInput<?>> asyncParams;
+    protected ArrayList<BaseInput<?>> asyncParams;
     /**
      * total number of created pins
      */
@@ -106,32 +104,6 @@ public abstract class AsyncProc implements Runnable {
             return 0;
         }
         return asyncParams.size();
-    }
-
-    protected synchronized Object[] collectTokens() {
-        if (asyncParams == null) {
-            return emptyArgs;
-        } else {
-            int paramCount = asyncParams.size();
-            Object[] args = new Object[paramCount];
-            for (int k = 0; k < paramCount; k++) {
-                args[k] = asyncParams.get(k).current();
-            }
-            return args;
-        }
-    }
-
-    protected void purgeAll() {
-        if (locks != null) {
-            for (int k = 0; k < locks.size(); k++) {
-                locks.get(k).purge();
-            }
-        }
-        if (asyncParams != null) {
-            for (int k = 0; k < asyncParams.size(); k++) {
-                asyncParams.get(k).purge();
-            }
-        }
     }
 
     /**
@@ -190,8 +162,6 @@ public abstract class AsyncProc implements Runnable {
 
         abstract protected void register();
 
-        abstract protected void unRegister();
-
         /**
          * Must be executed  before restart of the parent async action.
          * Cleans reference to value, if any.
@@ -200,9 +170,6 @@ public abstract class AsyncProc implements Runnable {
          * synchronized block.
          */
         public void purge() {
-            if (this==null) {
-                throw new IllegalStateException();
-            }
         }
 
     }
@@ -231,95 +198,22 @@ public abstract class AsyncProc implements Runnable {
             }
             locks.add(this);
         }
-
-        protected void unRegister() {
-            if (blocked) {
-                unblock();
-            }
-            locks.remove(this);
-        }
     }
 
     /**
-     * Token storage with standard Subscriber&lt;T&gt; interface. It has place for only one
+     * Token storage with standard Port&lt;T&gt; interface. It has place for only one
      * token, which is never consumed.
      *
      * @param <T>
      *     type of accepted tokens.
      */
-    public class ConstInput<T> extends BaseLock
-            implements Subscriber<T>  // to connect to a Publisher
+    public abstract class BaseInput<T> extends BaseLock implements Port<T>  // to connect to a Feeder
     {
-        protected Subscription subscription;
-        protected boolean cancelled = false;
-
-        /** extracted token */
-        protected boolean completed = false;
-        protected T current = null;
-        protected Throwable exception;
-
-        public ConstInput() {
+        public BaseInput() {
             super();
         }
 
-        public synchronized T current() {
-            if (exception != null) {
-                throw new IllegalStateException(exception);
-            }
-            return current;
-        }
-
-        public T getCurrent() {
-            return current;
-        }
-
-        public Throwable getException() {
-            return exception;
-        }
-
-        public boolean isDone() {
-            return completed || exception != null;
-        }
-
-        @Override
-        public void onSubscribe(Subscription s) {
-            this.subscription = s;
-        }
-
-        @Override
-        public void onNext(T message) {
-            if (message == null) {
-                throw new IllegalArgumentException();
-            }
-            if (isDone()) {
-                throw new IllegalStateException("token set already");
-            }
-            current = message;
-            unblock();
-        }
-
-        @Override
-        public void onError(Throwable throwable) {
-            if (isDone()) {
-                throw new IllegalStateException("token set already");
-            }
-            this.exception = throwable;
-        }
-
-        @Override
-        public void onComplete() {
-            onNext(null);
-        }
-
-        public synchronized void cancel() {
-            if (subscription == null) {
-                return;
-            }
-            Subscription subscription = this.subscription;
-            this.subscription = null;
-            cancelled = true;
-            subscription.cancel();
-        }
+        public abstract T current();
 
         @Override
         protected void register() {
@@ -331,16 +225,5 @@ public abstract class AsyncProc implements Runnable {
             }
             asyncParams.add(this);
         }
-
-        protected void unRegister() {
-            if (isStarted()) {
-                throw new IllegalStateException("cannot unregister connector after start");
-            }
-            if (blocked) {
-                unblock();
-            }
-            asyncParams.remove(this);
-        }
-
     }
 }

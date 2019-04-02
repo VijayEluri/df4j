@@ -12,13 +12,12 @@
  */
 package org.df4j.nio2.net;
 
+import org.df4j.core.Port;
+import org.df4j.core.connector.StreamFeeder;
 import org.df4j.core.connector.StreamInput;
-import org.df4j.core.connector.MulticastStreamOutput;
 import org.df4j.core.node.Action;
 import org.df4j.core.node.AsyncAction;
 import org.df4j.core.util.Logger;
-import org.reactivestreams.Subscriber;
-import org.reactivestreams.Subscription;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -42,7 +41,7 @@ import java.util.function.Consumer;
  * IO requests can be posted immediately, but will be executed
  * only after connection completes.
  */
-public class ServerConnection implements Subscriber<AsynchronousSocketChannel> {
+public class ServerConnection implements Port<AsynchronousSocketChannel> {
     protected static final Logger LOG = Logger.getLogger(ServerConnection.class.getName());
 
     private final Consumer<ServerConnection> backPort;
@@ -66,11 +65,6 @@ public class ServerConnection implements Subscriber<AsynchronousSocketChannel> {
 
     public ServerConnection(String name) {
         this(name, null);
-    }
-
-    @Override
-    public void onSubscribe(Subscription s) {
-
     }
 
     public void onNext(AsynchronousSocketChannel channel) {
@@ -124,7 +118,7 @@ public class ServerConnection implements Subscriber<AsynchronousSocketChannel> {
         protected final Logger LOG = Logger.getLogger(getClass().getName());
 
         public final StreamInput<ByteBuffer> input = new StreamInput<ByteBuffer>(this);
-        public final MulticastStreamOutput<ByteBuffer> output = new MulticastStreamOutput<>(this);
+        public final StreamFeeder<ByteBuffer> output = new StreamFeeder<>(this);
 
         {
             LOG.info(getClass().getName()+" "+name+" created");

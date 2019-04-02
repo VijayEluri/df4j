@@ -1,7 +1,7 @@
 package org.df4j.core.messagestream;
 
 import org.df4j.core.Port;
-import org.df4j.core.connectornode.PickPoint;
+import org.df4j.core.connectornode.SubmissionFeeder;
 import org.df4j.core.node.AsyncAction;
 import org.df4j.core.util.TimeSignalPublisher;
 import org.junit.Test;
@@ -28,7 +28,7 @@ public class DiningPhilosophersCallbacks {
         // create places for forks with 1 fork in each
         for (int k = 0; k < num; k++) {
             ForkPlace forkPlace = new ForkPlace(k);
-            forkPlace.onNext("Fork_" + k);
+            forkPlace.offer("Fork_" + k);
             forkPlaces[k] = forkPlace;
         }
         // create philosophers
@@ -42,7 +42,7 @@ public class DiningPhilosophersCallbacks {
         assertTrue(counter.await(2, TimeUnit.SECONDS));
     }
 
-    static class ForkPlace extends PickPoint<String> {
+    static class ForkPlace extends SubmissionFeeder<String> {
         int id;
         String label;
 
@@ -122,10 +122,10 @@ public class DiningPhilosophersCallbacks {
 
         public void eating() {
             println("Release first (" + firstPlace.id + ")");
-            firstPlace.onNext(firstFork);
+            firstPlace.offer(firstFork);
             firstFork = null;
             println("Release second (" + secondPlace.id + ")");
-            secondPlace.onNext(secondFork);
+            secondPlace.offer(secondFork);
             secondFork = null;
             rounds++;
             if (rounds < N) {

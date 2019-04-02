@@ -1,10 +1,10 @@
 package org.df4j.core.permitstream;
 
-import org.df4j.core.connector.MulticastStreamOutput;
 import org.df4j.core.connector.Semafor;
-import org.df4j.core.node.ext.AllOf;
+import org.df4j.core.connector.StreamFeeder;
 import org.df4j.core.node.Actor;
 import org.df4j.core.node.ext.Actor1;
+import org.df4j.core.node.ext.AllOf;
 import org.df4j.core.node.ext.StreamProcessor;
 import org.junit.Test;
 
@@ -13,7 +13,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 
 /**
  *  This is a demonstration how backpressure can be implemented using plain {@link Semafor}
@@ -27,23 +26,25 @@ public class PermitStreamExample {
         int totalCount = 10;
         Source first = new Source(totalCount);
         TestProcessor testProcessor = new TestProcessor();
-        TestProcessor testProcessor1 = new TestProcessor();
+   //     TestProcessor testProcessor1 = new TestProcessor();
         Sink last = new Sink(first.backPressureActuator);
 
         first.pub.subscribe(testProcessor);
-        testProcessor.subscribe(testProcessor1);
-        testProcessor1.subscribe(last);
+    //    testProcessor.subscribe(testProcessor1);
+//        testProcessor1.subscribe(last);
+        testProcessor.subscribe(last);
         first.start();
 
         AllOf all = new AllOf();
-        all.registerAsyncResult(first, testProcessor, testProcessor1, last);
+//        all.registerAsyncResult(first, testProcessor, testProcessor1, last);
+        all.registerAsyncResult(first, testProcessor, testProcessor, last);
         last.asyncResult().get(400, TimeUnit.MILLISECONDS);
         assertEquals(totalCount, last.totalCount);
     }
 
     public static class Source extends Actor {
         Semafor backPressureActuator = new Semafor(this);
-        MulticastStreamOutput<Integer> pub = new MulticastStreamOutput<>(this);
+        StreamFeeder<Integer> pub = new StreamFeeder<>(this);
         int count;
 
         Source(int count) {

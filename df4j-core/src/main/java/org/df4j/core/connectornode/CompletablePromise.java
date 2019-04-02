@@ -1,9 +1,7 @@
 package org.df4j.core.connectornode;
 
+import org.df4j.core.Feeder;
 import org.df4j.core.Port;
-import org.reactivestreams.Publisher;
-import org.reactivestreams.Subscriber;
-import org.reactivestreams.Subscription;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.function.BiConsumer;
@@ -13,7 +11,7 @@ import java.util.function.BiConsumer;
  * @param <R> type of input parameter
  * @param <R> type of result
  */
-public class CompletablePromise<R> extends CompletableFuture<R> implements Port<R>, Publisher<R> {
+public class CompletablePromise<R> extends CompletableFuture<R> implements Port<R>, Feeder<R> {
 
     @Override
     public void onNext(R message) {
@@ -26,7 +24,7 @@ public class CompletablePromise<R> extends CompletableFuture<R> implements Port<
     }
 
     @Override
-    public void subscribe(Subscriber<? super R> subscriber) {
+    public void subscribe(Port<? super R> subscriber) {
         new ScalarSubscription(subscriber);
     }
 
@@ -49,15 +47,13 @@ public class CompletablePromise<R> extends CompletableFuture<R> implements Port<
     }
 
 
-    class ScalarSubscription implements Subscription, BiConsumer<R, Throwable> {
+    class ScalarSubscription implements BiConsumer<R, Throwable> {
 
-        private final Subscriber<? super R> subscriber;
-        private final CompletableFuture<R> cp;
+        private final Port<? super R> subscriber;
 
-        public <S extends Subscriber<? super R>> ScalarSubscription(S subscriber) {
+        public <S extends Port<? super R>> ScalarSubscription(S subscriber) {
             this.subscriber = subscriber;
-            cp = CompletablePromise.this.whenComplete(this);
-            subscriber.onSubscribe(this);
+            CompletablePromise.this.whenComplete(this);
         }
 
         @Override
@@ -67,14 +63,6 @@ public class CompletablePromise<R> extends CompletableFuture<R> implements Port<
             } else {
                 subscriber.onNext(r);
             }
-        }
-
-        @Override
-        public void request(long n) {}
-
-        @Override
-        public void cancel() {
-            cp.cancel(true);
         }
     }
 }

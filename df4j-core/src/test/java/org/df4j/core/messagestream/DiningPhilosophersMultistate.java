@@ -2,7 +2,7 @@ package org.df4j.core.messagestream;
 
 import org.df4j.core.connector.ScalarInput;
 import org.df4j.core.connector.Semafor;
-import org.df4j.core.connectornode.PickPoint;
+import org.df4j.core.connectornode.SubmissionFeeder;
 import org.df4j.core.node.Action;
 import org.df4j.core.node.AsyncAction;
 import org.df4j.core.node.ext.AllOf;
@@ -36,7 +36,7 @@ public class DiningPhilosophersMultistate {
         // create places for forks with 1 fork in each
         for (int k=0; k < num; k++) {
             ForkPlace forkPlace = new ForkPlace(k);
-            forkPlace.onNext(new Fork(k));
+            forkPlace.offer(new Fork(k));
             forkPlaces[k]=forkPlace;
         }
         // create philosophers
@@ -50,7 +50,7 @@ public class DiningPhilosophersMultistate {
             philosophers[k].start();
         }
         listener.start();
-        listener.get(2, TimeUnit.SECONDS);
+        listener.get(1, TimeUnit.SECONDS);
     }
 
     static class Fork  {
@@ -66,19 +66,13 @@ public class DiningPhilosophersMultistate {
         }
     }
     
-    static class ForkPlace extends PickPoint<Fork> {
+    static class ForkPlace extends SubmissionFeeder<Fork> {
         int id;
         String label;
 
         public ForkPlace(int k) {
             id = k;
             label="Forkplace_"+id;
-        }
-
-        @Override
-        public void onNext(Fork resource) {
- //           System.out.println(label+": put "+resource.toString());
-            super.onNext(resource);
         }
     }
 
@@ -193,9 +187,9 @@ public class DiningPhilosophersMultistate {
             @Override
             public void runAction() {
                 println("Release first (" + firstPlace.id + ")");
-                firstPlace.onNext(first);
+                firstPlace.offer(first);
                 println("Release second (" + secondPlace.id + ")");
-                secondPlace.onNext(second);
+                secondPlace.offer(second);
                 first = second = null;
                 rounds++;
                 if (rounds < N) {
