@@ -11,9 +11,9 @@ package org.df4j.nio2.net;
 
 import org.df4j.core.Feeder;
 import org.df4j.core.Port;
-import org.df4j.core.connector.StreamFeeder;
-import org.df4j.core.node.Action;
-import org.df4j.core.node.AsyncAction;
+import org.df4j.core.stream.StreamFeeder;
+import org.df4j.core.util.invoker.Action;
+import org.df4j.core.scalar.ext.AsyncAction;
 import org.df4j.core.util.Logger;
 
 import java.io.IOException;
